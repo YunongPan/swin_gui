@@ -1,12 +1,383 @@
 import os
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog
 from PyQt5.QtCore import QThread, pyqtSignal, QEventLoop, QTimer
 from PyQt5.QtGui import QPixmap, QImage, QDoubleValidator, QIntValidator
 
-
 import gui
+import set_parameters_gui
 from gui import *
+from set_parameters_gui import *
+
+
+class ParameterWindow(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.ui = set_parameters_gui.Ui_Dialog()
+        self.ui.setupUi(self)
+        flag = QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowMaximizeButtonHint | QtCore.Qt.WindowCloseButtonHint
+        self.setWindowFlags(flag)
+        self.setWindowState(QtCore.Qt.WindowMinimized)
+
+        self.setWindowTitle('Set Parameters')
+
+        self.className = str()
+        self.classNumber = str()
+        self.testNumber = str()
+        self.epochMax = str()
+        self.epochInterval = str()
+        self.learningRate = str()
+        self.gpuSample = str()
+        self.gpuWorker = str()
+
+        self.parameterConfig = str()
+        self.maskRcnnSwinFpn = 'configs/_base_/models/mask_rcnn_swin_fpn.py'
+        self.defaultRuntime = 'configs/_base_/default_runtime.py'
+        self.cocoInstance = 'configs/_base_/datasets/coco_instance.py'
+        self.coco = 'mmdet/datasets/coco.py'
+
+        self.ui.pushButton_apply_parameters.setEnabled(False)
+
+        self.ui.lineEdit_class_name.editingFinished.connect(self.updateClassName)
+        self.ui.lineEdit_class_number.editingFinished.connect(self.updateClassNumber)
+        self.ui.lineEdit_test_images.editingFinished.connect(self.updateTestNumber)
+        self.ui.lineEdit_epoch_max.editingFinished.connect(self.updateEpochMax)
+        self.ui.lineEdit_epoch_interval.editingFinished.connect(self.updateEpochInterval)
+        self.ui.lineEdit_lr.editingFinished.connect(self.updateLearningRate)
+        self.ui.lineEdit_samples.editingFinished.connect(self.updateGpuSample)
+        self.ui.lineEdit_workers.editingFinished.connect(self.updateGpuWorker)
+
+        self.ui.pushButton_select_config_file.clicked.connect(self.chooseParameterConfig)
+        self.ui.pushButton_clear.clicked.connect(self.clearWindow)
+        self.ui.pushButton_apply_parameters.clicked.connect(self.applyParameters)
+
+
+
+    def chooseParameterConfig(self, FilePath):########################################################################
+        config = QtWidgets.QFileDialog.getOpenFileName(self,  "Select your config", "./py")[0]
+        if config == '':
+            self.clearWindow()
+            self.ui.pushButton_select_config_file.setText('        Select config file        ')
+            return
+        pos = config.find('swin_gui')
+        config = config[pos + 9:]
+
+        pos = len(config)
+        for ch in config[::-1]:
+            if ch == '/':
+                break
+            pos = pos - 1
+
+        post = str()
+        for ch in config[::-1]:
+            if ch == '.':
+                break
+            post += ch
+
+        if post != 'yp':
+            self.clearWindow()
+            self.ui.pushButton_select_config_file.setText('Selected file is not a valid config (.py)!')
+            return
+
+        configFile = open(config, 'r')
+        readConfigFile = configFile.read()
+        configFile.close()
+        lr_index_start = readConfigFile.find(', lr=') + 5
+        if lr_index_start == 4:
+            self.clearWindow()
+            self.ui.pushButton_select_config_file.setText('Selected file is not a valid config!')
+            return
+        else:
+            self.ui.pushButton_select_config_file.setText(config[pos:])
+            self.parameterConfig = config
+
+        max_epoch_start = readConfigFile.find('max_epochs=') + 11
+        if max_epoch_start == 10:
+            self.clearWindow()
+            self.ui.pushButton_select_config_file.setText('Selected file is not a valid config!')
+            return
+        else:
+            self.ui.pushButton_select_config_file.setText(config[pos:])
+            self.parameterConfig = config
+
+
+        if self.parameterConfig != '':
+            self.checkParameters()
+
+
+
+
+
+    def checkParameters(self):
+
+        # Read Parameters from Config File
+        configFile = open(self.parameterConfig, 'r')
+        readConfigFile = configFile.read()
+        configFile.close()
+
+        lr_index_start = readConfigFile.find(', lr=') + 5
+        lr_index_end = readConfigFile.find(',', lr_index_start)
+        self.learningRate = readConfigFile[lr_index_start:lr_index_end]
+        self.ui.lineEdit_lr.setText(self.learningRate)
+
+        max_epoch_start = readConfigFile.find('max_epochs=') + 11
+        max_epoch_end = readConfigFile.find(')', max_epoch_start)
+        self.epochMax = readConfigFile[max_epoch_start:max_epoch_end]
+        self.ui.lineEdit_epoch_max.setText(self.epochMax)
+
+        # Read Parameters from mask_rcnn_swin_fpn.py
+        maskRcnnFile = open(self.maskRcnnSwinFpn, 'r')
+        readMaskRcnnFile = maskRcnnFile.read()
+        maskRcnnFile.close()
+
+        num_classes_1_start = readMaskRcnnFile.find('num_classes=') + 12
+        num_classes_1_end = readMaskRcnnFile.find(',', num_classes_1_start)
+        self.classNumber = readMaskRcnnFile[num_classes_1_start:num_classes_1_end]
+        self.ui.lineEdit_class_number.setText(self.classNumber)
+
+        # Read Parameters from default_runtime.py
+        defaultRuntimeFile = open(self.defaultRuntime, 'r')
+        readDefaultRuntimeFile = defaultRuntimeFile.read()
+        defaultRuntimeFile.close()
+
+        epoch_interval_start = readDefaultRuntimeFile.find('checkpoint_config = dict(interval=') + 34
+        epoch_interval_end = readDefaultRuntimeFile.find(')', epoch_interval_start)
+        self.epochInterval = readDefaultRuntimeFile[epoch_interval_start:epoch_interval_end]
+        self.ui.lineEdit_epoch_interval.setText(self.epochInterval)
+
+        test_image_number_start = readDefaultRuntimeFile.find('interval=', epoch_interval_end) + 9
+        test_image_number_end = readDefaultRuntimeFile.find(',', test_image_number_start)
+        self.testNumber = readDefaultRuntimeFile[test_image_number_start:test_image_number_end]
+        self.ui.lineEdit_test_images.setText(self.testNumber)
+
+
+        # Read Parameters from coco_instance.py
+        cocoInstanceFile = open(self.cocoInstance, 'r')
+        readCocoInstanceFile = cocoInstanceFile.read()
+        cocoInstanceFile.close()
+
+        samples_per_gpu_start = readCocoInstanceFile.find('samples_per_gpu=') + 16
+        samples_per_gpu_end = readCocoInstanceFile.find(',', samples_per_gpu_start)
+        self.gpuSample = readCocoInstanceFile[samples_per_gpu_start:samples_per_gpu_end]
+        self.ui.lineEdit_samples.setText(self.gpuSample)
+
+        workers_per_gpu_start = readCocoInstanceFile.find('workers_per_gpu=') + 16
+        workers_per_gpu_end = readCocoInstanceFile.find(',', workers_per_gpu_start)
+        self.gpuWorker = readCocoInstanceFile[workers_per_gpu_start:workers_per_gpu_end]
+        self.ui.lineEdit_workers.setText(self.gpuWorker)
+
+        # Read Parameters from coco.py
+        cocoFile = open(self.coco, 'r')
+        readCocoFile = cocoFile.read()
+        cocoFile.close()
+
+        name_classes_start = readCocoFile.find('CLASSES = ') + 10
+        name_classes_end = readCocoFile.find('## check mark ##', name_classes_start)
+        self.className = readCocoFile[name_classes_start:name_classes_end]
+        self.ui.lineEdit_class_name.setText(self.className)
+        if self.className != '' and self.classNumber != '' and self.testNumber != '' and self.epochMax != '' and self.epochInterval != '' and self.learningRate != '' and self.gpuSample != '' and self.gpuWorker != '' and self.parameterConfig != '':
+            self.ui.pushButton_apply_parameters.setEnabled(True)
+
+
+    def updateClassName(self): ##############################################################
+        self.className = self.ui.lineEdit_class_name.text()
+        if self.className != '' and self.classNumber != '' and self.testNumber != '' and self.epochMax != '' and self.epochInterval != '' and self.learningRate != '' and self.gpuSample != '' and self.gpuWorker != '' and self.parameterConfig != '':
+            self.ui.pushButton_apply_parameters.setEnabled(True)
+        else:
+            self.ui.pushButton_apply_parameters.setEnabled(False)
+
+    def updateClassNumber(self): ##############################################################
+        self.classNumber = self.ui.lineEdit_class_number.text()
+        if self.className != '' and self.classNumber != '' and self.testNumber != '' and self.epochMax != '' and self.epochInterval != '' and self.learningRate != '' and self.gpuSample != '' and self.gpuWorker != '' and self.parameterConfig != '':
+            self.ui.pushButton_apply_parameters.setEnabled(True)
+        else:
+            self.ui.pushButton_apply_parameters.setEnabled(False)
+
+    def updateTestNumber(self): ##############################################################
+        self.testNumber = self.ui.lineEdit_test_images.text()
+        if self.className != '' and self.classNumber != '' and self.testNumber != '' and self.epochMax != '' and self.epochInterval != '' and self.learningRate != '' and self.gpuSample != '' and self.gpuWorker != '' and self.parameterConfig != '':
+            self.ui.pushButton_apply_parameters.setEnabled(True)
+        else:
+            self.ui.pushButton_apply_parameters.setEnabled(False)
+
+    def updateEpochMax(self): ##############################################################
+        self.epochMax = self.ui.lineEdit_epoch_max.text()
+        if self.className != '' and self.classNumber != '' and self.testNumber != '' and self.epochMax != '' and self.epochInterval != '' and self.learningRate != '' and self.gpuSample != '' and self.gpuWorker != '' and self.parameterConfig != '':
+            self.ui.pushButton_apply_parameters.setEnabled(True)
+        else:
+            self.ui.pushButton_apply_parameters.setEnabled(False)
+
+    def updateEpochInterval(self): ##############################################################
+        self.epochInterval = self.ui.lineEdit_epoch_interval.text()
+        if self.className != '' and self.classNumber != '' and self.testNumber != '' and self.epochMax != '' and self.epochInterval != '' and self.learningRate != '' and self.gpuSample != '' and self.gpuWorker != '' and self.parameterConfig != '':
+            self.ui.pushButton_apply_parameters.setEnabled(True)
+        else:
+            self.ui.pushButton_apply_parameters.setEnabled(False)
+
+    def updateLearningRate(self): ##############################################################
+        self.learningRate = self.ui.lineEdit_lr.text()
+        if self.className != '' and self.classNumber != '' and self.testNumber != '' and self.epochMax != '' and self.epochInterval != '' and self.learningRate != '' and self.gpuSample != '' and self.gpuWorker != '' and self.parameterConfig != '':
+            self.ui.pushButton_apply_parameters.setEnabled(True)
+        else:
+            self.ui.pushButton_apply_parameters.setEnabled(False)
+
+    def updateGpuSample(self): ##############################################################
+        self.gpuSample = self.ui.lineEdit_samples.text()
+        if self.className != '' and self.classNumber != '' and self.testNumber != '' and self.epochMax != '' and self.epochInterval != '' and self.learningRate != '' and self.gpuSample != '' and self.gpuWorker != '' and self.parameterConfig != '':
+            self.ui.pushButton_apply_parameters.setEnabled(True)
+        else:
+            self.ui.pushButton_apply_parameters.setEnabled(False)
+
+    def updateGpuWorker(self): ##############################################################
+        self.gpuWorker = self.ui.lineEdit_workers.text()
+        if self.className != '' and self.classNumber != '' and self.testNumber != '' and self.epochMax != '' and self.epochInterval != '' and self.learningRate != '' and self.gpuSample != '' and self.gpuWorker != '' and self.parameterConfig != '':
+            self.ui.pushButton_apply_parameters.setEnabled(True)
+        else:
+            self.ui.pushButton_apply_parameters.setEnabled(False)
+
+
+
+    def applyParameters(self): ##############################################################
+        className = self.className
+        classNumber = self.classNumber
+        testNumber = self.testNumber
+        epochMax = self.epochMax
+        epochInterval = self.epochInterval
+        learningRate = self.learningRate
+        gpuSample = self.gpuSample
+        gpuWorker = self.gpuWorker
+
+
+        # Rewrite config file
+        configFile = open(self.parameterConfig, 'r+')
+        readConfigFile = configFile.read()
+
+        lr_index_start = readConfigFile.find(', lr=') + 5
+        lr_index_end = readConfigFile.find(',', lr_index_start)
+        readConfigFile_new1 = readConfigFile.replace(', lr=' + readConfigFile[lr_index_start:lr_index_end], ', lr=' + learningRate)
+
+        max_epoch_start = readConfigFile_new1.find('max_epochs=') + 11
+        max_epoch_end = readConfigFile_new1.find(')', max_epoch_start)
+        readConfigFile_new2 = readConfigFile_new1.replace('max_epochs=' + readConfigFile_new1[max_epoch_start:max_epoch_end], 'max_epochs=' + epochMax)
+
+        configFile.seek(0)
+        configFile.truncate()
+        configFile.write(readConfigFile_new2)
+        configFile.close()
+
+        # Rewrite mask_rcnn_swin_fpn.py
+        maskRcnnFile = open(self.maskRcnnSwinFpn, 'r+')
+        readMaskRcnnFile = maskRcnnFile.read()
+
+        num_classes_1_start = readMaskRcnnFile.find('num_classes=') + 12
+        num_classes_1_end = readMaskRcnnFile.find(',', num_classes_1_start)
+        readMaskRcnnFile_new1 = readMaskRcnnFile.replace('num_classes=' + readMaskRcnnFile[num_classes_1_start:num_classes_1_end], 'num_classes=' + classNumber)
+
+        num_classes_2_start = readMaskRcnnFile_new1.find('num_classes=', num_classes_1_end) + 12
+        num_classes_2_end = readMaskRcnnFile_new1.find(',', num_classes_2_start)
+        readMaskRcnnFile_new2 = readMaskRcnnFile_new1.replace('num_classes=' + readMaskRcnnFile_new1[num_classes_2_start:num_classes_2_end], 'num_classes=' + classNumber)
+
+        maskRcnnFile.seek(0)
+        maskRcnnFile.truncate()
+        maskRcnnFile.write(readMaskRcnnFile_new2)
+        maskRcnnFile.close()
+
+
+        # Rewrite default_runtime.py
+        defaultRuntimeFile= open(self.defaultRuntime, 'r+')
+        readDefaultRuntimeFile = defaultRuntimeFile.read()
+
+        epoch_interval_start = readDefaultRuntimeFile.find('checkpoint_config = dict(interval=') + 34
+        epoch_interval_end = readDefaultRuntimeFile.find(')', epoch_interval_start)
+        readDefaultRuntimeFile_new1 = readDefaultRuntimeFile.replace('checkpoint_config = dict(interval=' + readDefaultRuntimeFile[epoch_interval_start:epoch_interval_end], 'checkpoint_config = dict(interval=' + epochInterval)
+
+        test_image_number_start = readDefaultRuntimeFile_new1.find('interval=', epoch_interval_end) + 9
+        test_image_number_end = readDefaultRuntimeFile_new1.find(',', test_image_number_start)
+        readDefaultRuntimeFile_new2 = readDefaultRuntimeFile_new1.replace('interval=' + readDefaultRuntimeFile_new1[test_image_number_start:test_image_number_end], 'interval=' + testNumber)
+
+        defaultRuntimeFile.seek(0)
+        defaultRuntimeFile.truncate()
+        defaultRuntimeFile.write(readDefaultRuntimeFile_new2)
+        defaultRuntimeFile.close()
+
+        # Rewrite coco_instance.py
+        cocoInstanceFile = open(self.cocoInstance, 'r+')
+        readCocoInstanceFile = cocoInstanceFile.read()
+
+        samples_per_gpu_start = readCocoInstanceFile.find('samples_per_gpu=') + 16
+        samples_per_gpu_end = readCocoInstanceFile.find(',', samples_per_gpu_start)
+        readCocoInstanceFile_new1 = readCocoInstanceFile.replace('samples_per_gpu=' + readCocoInstanceFile[samples_per_gpu_start:samples_per_gpu_end], 'samples_per_gpu=' + gpuSample)
+
+        workers_per_gpu_start = readCocoInstanceFile_new1.find('workers_per_gpu=') + 16
+        workers_per_gpu_end = readCocoInstanceFile_new1.find(',', workers_per_gpu_start)
+        readCocoInstanceFile_new2 = readCocoInstanceFile_new1.replace('workers_per_gpu=' + readCocoInstanceFile_new1[workers_per_gpu_start:workers_per_gpu_end], 'workers_per_gpu=' + gpuWorker)
+
+        cocoInstanceFile.seek(0)
+        cocoInstanceFile.truncate()
+        cocoInstanceFile.write(readCocoInstanceFile_new2)
+        cocoInstanceFile.close()
+
+
+        # Rewrite coco.py
+        cocoFile = open(self.coco, 'r+')
+        readCocoFile = cocoFile.read()
+
+        name_classes_start = readCocoFile.find('CLASSES = ') + 10
+        name_classes_end = readCocoFile.find('## check mark ##', name_classes_start)
+        readCocoFile_new = readCocoFile.replace('CLASSES = ' + readCocoFile[name_classes_start:name_classes_end], 'CLASSES = ' + className)
+
+        cocoFile.seek(0)
+        cocoFile.truncate()
+        cocoFile.write(readCocoFile_new)
+        cocoFile.close()
+
+    def clearWindow(self):
+        self.ui.pushButton_select_config_file.setText('        Select config file        ')
+        self.ui.lineEdit_class_name.setText('')
+        self.ui.lineEdit_class_number.setText('')
+        self.ui.lineEdit_test_images.setText('')
+        self.ui.lineEdit_epoch_max.setText('')
+        self.ui.lineEdit_epoch_interval.setText('')
+        self.ui.lineEdit_lr.setText('')
+        self.ui.lineEdit_samples.setText('')
+        self.ui.lineEdit_workers.setText('')
+        self.className = str()
+        self.classNumber = str()
+        self.testNumber = str()
+        self.epochMax = str()
+        self.epochInterval = str()
+        self.learningRate = str()
+        self.gpuSample = str()
+        self.gpuWorker = str()
+        self.parameterConfig = str()
+        self.ui.pushButton_apply_parameters.setEnabled(False)
+
+
+
+
+
+
+
+    #     alter("file1", "python", "测试")
+    #
+    # def alter(file, old_str, new_str):
+    #     """
+    #     将替换的字符串写到一个新的文件中，然后将原文件删除，新文件改为原来文件的名字
+    #     :param file: 文件路径
+    #     :param old_str: 需要替换的字符串
+    #     :param new_str: 替换的字符串
+    #     :return: None
+    #     """
+    #     with open(file, "r", encoding="utf-8") as f1, open("%s.bak" % file, "w", encoding="utf-8") as f2:
+    #         for line in f1:
+    #             if old_str in line:
+    #                 line = line.replace(old_str, new_str)
+    #             f2.write(line)
+    #     os.remove(file)
+    #     os.rename("%s.bak" % file, file)
+
+
+
 
 class MainWindow(QMainWindow):
 
@@ -35,11 +406,15 @@ class MainWindow(QMainWindow):
         self.ui.pushButton_video_test.setEnabled(False)
 
 
+        # Set Parameters Subwindow
+        self.ui.pushButton_set_parameters.clicked.connect(self.showParameterWindow)
+
         # Training
         self.t = TrainingThread()
         self.ui.pushButton_select_model_pretrained.clicked.connect(self.choosePretrainedModel)
         self.ui.pushButton_select_config.clicked.connect(self.chooseTrainingConfig)
         self.ui.pushButton_train.clicked.connect(self.triggerTraining)
+
         #
         # Image Test
         self.e = EvaluationThread()
@@ -68,10 +443,15 @@ class MainWindow(QMainWindow):
         self.ui.pushButton_stop.clicked.connect(self.terminateThread)
         # self.clearWindow()
 
+    def showParameterWindow(self):
+        myParameterWindow = ParameterWindow()
+        myParameterWindow.exec()
+
+
     def choosePretrainedModel(self, FilePath): ########################################################################
         model = QtWidgets.QFileDialog.getOpenFileName(self, "Select your pretrained model", "./weights")[0]
         if model == '':
-            self.ui.pushButton_select_model_pretrained.setText('Select model')
+            self.ui.pushButton_select_model_pretrained.setText('Select pretrained model')
             self.ui.pushButton_train.setEnabled(False)
             return
 
@@ -452,7 +832,10 @@ class EvaluationThread(QThread):
 
 if __name__ == '__main__':
     myapp = QtWidgets.QApplication(sys.argv)
+
     myMainWindow = MainWindow()
+    myParameterWindow = ParameterWindow
 
     myMainWindow.show()
+
     sys.exit(myapp.exec_())
