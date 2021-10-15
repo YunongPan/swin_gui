@@ -18,8 +18,11 @@ def main():
     model = init_detector(args.config, args.checkpoint, device=args.device)
     # test a single image
     result = inference_detector(model, args.img)
-    # show the results
-    show_result_pyplot(model, args.img, result, score_thr=args.score_thr)
+    ## show the results
+    #show_result_pyplot(model, args.img, result, score_thr=args.score_thr)
+
+    # save image with result
+    model.show_result(args.img, result, out_file='image_test_result.jpg')
 
 
 if __name__ == '__main__':

@@ -1,13 +1,27 @@
 import os
 import sys
+import time
+import subprocess
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog
-from PyQt5.QtCore import QThread, pyqtSignal, QEventLoop, QTimer
+from PyQt5.QtCore import QThread, pyqtSignal, QEventLoop, QTimer, QProcess
 from PyQt5.QtGui import QPixmap, QImage, QDoubleValidator, QIntValidator
 
 import gui
 import set_parameters_gui
+import param_confirm
 from gui import *
 from set_parameters_gui import *
+
+class ConfirmWindow(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.ui = param_confirm.Ui_Dialog()
+        self.ui.setupUi(self)
+        flag = QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowCloseButtonHint
+        self.setWindowFlags(flag)
+        self.setWindowState(QtCore.Qt.WindowMinimized)
+        self.setWindowTitle('Dialog')
+        self.ui.pushButton_ok.clicked.connect(self.close)
 
 
 class ParameterWindow(QDialog):
@@ -50,6 +64,7 @@ class ParameterWindow(QDialog):
         self.ui.pushButton_select_config_file.clicked.connect(self.chooseParameterConfig)
         self.ui.pushButton_clear.clicked.connect(self.clearWindow)
         self.ui.pushButton_apply_parameters.clicked.connect(self.applyParameters)
+        self.ui.pushButton_close.clicked.connect(self.close)
 
 
 
@@ -331,6 +346,14 @@ class ParameterWindow(QDialog):
         cocoFile.write(readCocoFile_new)
         cocoFile.close()
 
+        # Close subwindow
+        self.showConfirmWindow()
+
+    def showConfirmWindow(self):
+        myConfirmWindow = ConfirmWindow()
+        myConfirmWindow.exec()
+
+
     def clearWindow(self):
         self.ui.pushButton_select_config_file.setText('        Select config file        ')
         self.ui.lineEdit_class_name.setText('')
@@ -352,32 +375,8 @@ class ParameterWindow(QDialog):
         self.parameterConfig = str()
         self.ui.pushButton_apply_parameters.setEnabled(False)
 
-
-
-
-
-
-
-    #     alter("file1", "python", "测试")
-    #
-    # def alter(file, old_str, new_str):
-    #     """
-    #     将替换的字符串写到一个新的文件中，然后将原文件删除，新文件改为原来文件的名字
-    #     :param file: 文件路径
-    #     :param old_str: 需要替换的字符串
-    #     :param new_str: 替换的字符串
-    #     :return: None
-    #     """
-    #     with open(file, "r", encoding="utf-8") as f1, open("%s.bak" % file, "w", encoding="utf-8") as f2:
-    #         for line in f1:
-    #             if old_str in line:
-    #                 line = line.replace(old_str, new_str)
-    #             f2.write(line)
-    #     os.remove(file)
-    #     os.rename("%s.bak" % file, file)
-
-
-
+#############################################################################################################################################
+#############################################################################################################################################
 
 class MainWindow(QMainWindow):
 
@@ -401,32 +400,35 @@ class MainWindow(QMainWindow):
         self.videoConfig = str()
         self.videoSaveName = 'result'
 
+        self.outString = "Out:"
+        self.errString = "Err:"
+        self.process = QProcess()
+        self.setup_ui()
+
+
         self.ui.pushButton_image_test.setEnabled(False)
         self.ui.pushButton_train.setEnabled(False)
         self.ui.pushButton_video_test.setEnabled(False)
-
 
         # Set Parameters Subwindow
         self.ui.pushButton_set_parameters.clicked.connect(self.showParameterWindow)
 
         # Training
-        self.t = TrainingThread()
+        # self.t = TrainingThread()
         self.ui.pushButton_select_model_pretrained.clicked.connect(self.choosePretrainedModel)
         self.ui.pushButton_select_config.clicked.connect(self.chooseTrainingConfig)
         self.ui.pushButton_train.clicked.connect(self.triggerTraining)
 
         #
         # Image Test
-        self.e = EvaluationThread()
+        # self.e = EvaluationThread()
         self.ui.pushButton_select_model_image.clicked.connect(self.chooseImageModel)
         self.ui.pushButton_select_image.clicked.connect(self.chooseImageFile)
         self.ui.pushButton_select_config_image.clicked.connect(self.chooseImageConfig)
         self.ui.pushButton_image_test.clicked.connect(self.triggerImageTest)
         #
         # Video Test
-        self.d = DisplayThread()
-#        self.d.signalForText.connect(self.updateTextBrowser)
-#        sys.stdout = self.d
+        # self.d = DisplayThread()
         self.ui.pushButton_select_model_video.clicked.connect(self.chooseVideoModel)
         self.ui.pushButton_select_video.clicked.connect(self.chooseVideoFile)
         self.ui.pushButton_select_config_video.clicked.connect(self.chooseVideoConfig)
@@ -434,14 +436,38 @@ class MainWindow(QMainWindow):
         self.ui.pushButton_video_test.clicked.connect(self.triggerVideoTest)
 
 
-        # self.ui.lineEdit_video_save_name.editingFinished.connect(self.updateTrainConfig)
-        #
-        #
         # Clear
         self.ui.pushButton_reset.clicked.connect(self.resetWindow)
-        # self.ui.pushButton_clear_terminal.clicked.connect(self.clearTerminal)
+        self.ui.pushButton_clear_terminal.clicked.connect(self.clearTerminal)
         self.ui.pushButton_stop.clicked.connect(self.terminateThread)
         # self.clearWindow()
+
+    #######################################################################################################
+    def setup_ui(self):
+        self.process.readyReadStandardOutput.connect(self.update_stdout)
+        self.process.readyReadStandardError.connect(self.update_stderr)
+
+
+    def updateTextBrowser(self, text):
+        cursor = self.ui.textBrowser_terminal.textCursor()
+        cursor.movePosition(QtGui.QTextCursor.End)
+        cursor.insertText(text)
+        self.ui.textBrowser_terminal.setTextCursor(cursor)
+        self.ui.textBrowser_terminal.ensureCursorVisible()
+
+    def update_stdout(self):
+        data = self.process.readAllStandardOutput().data()
+        # self.outString += " " + data.decode("utf-8").rstrip()
+        self.outString = data.decode("utf-8").rstrip()
+        self.ui.textBrowser_terminal.append(self.outString)
+
+    def update_stderr(self):
+        data = self.process.readAllStandardError().data()
+        self.errString = data.decode("utf-8").rstrip()
+        self.ui.textBrowser_terminal.append(self.errString)
+        # self.ui.textBrowser_terminal.setText(self.errString)
+
+    #######################################################################################################
 
     def showParameterWindow(self):
         myParameterWindow = ParameterWindow()
@@ -511,11 +537,13 @@ class MainWindow(QMainWindow):
             self.ui.pushButton_train.setEnabled(True)
 
     def triggerTraining(self): ########################################################################
-        pretrainedModel = self.pretrainedModel
-        trainingConfig = self.trainingConfig
+        # pretrainedModel = self.pretrainedModel
+        # trainingConfig = self.trainingConfig
 
-        self.t = TrainingThread(pretrainedModel, trainingConfig)
-        self.t.start()
+        cmd = "tools/train.py " + self.trainingConfig + " --cfg-options model.pretrained=" + self.pretrainedModel
+
+        self.process.start("python", cmd.split())
+        # self.process.start("python", "program.py".split())
 
 
 
@@ -612,13 +640,23 @@ class MainWindow(QMainWindow):
 
 
     def triggerImageTest(self): ########################################################################
-        imageFile = self.imageFile
-        imageModel = self.imageModel
-        imageConfig = self.imageConfig
+        if os.path.exists("image_test_result.jpg"):
+            os.remove("image_test_result.jpg")
+        cmd = "demo/image_demo.py " + self.imageFile + " " + self.imageConfig + " " + self.imageModel
+        self.process.start("python", cmd.split())
+        timer = 0
+        while timer < 200:
+            if os.path.exists("image_test_result.jpg"):
+                pixmap = QtGui.QPixmap("image_test_result.jpg")
+                width = self.ui.display.frameGeometry().width()
+                height = self.ui.display.frameGeometry().height()
+                pixmap4 = pixmap.scaled(width, height, QtCore.Qt.KeepAspectRatio)
 
-        self.e = EvaluationThread(imageFile, imageModel, imageConfig)
-        self.e.start()
-
+                self.ui.display.setPixmap(pixmap4)
+                # self.ui.display.setScaledContents(True)
+                break
+            timer += 1
+            time.sleep(0.1)
 
 
     def chooseVideoModel(self, FilePath): ########################################################################
@@ -716,30 +754,32 @@ class MainWindow(QMainWindow):
         self.videoSaveName = self.ui.lineEdit_video_save_name.text()
 
     def triggerVideoTest(self): ########################################################################
-        videoFile = self.videoFile
-        videoModel = self.videoModel
-        videoConfig = self.videoConfig
-        videoSaveName = self.videoSaveName
         if self.videoSaveName == '':
             self.ui.display.setText('Please enter the name of the file to be saved!')
         else:
-            self.d = DisplayThread(videoFile, videoModel, videoConfig, videoSaveName)
-            self.d.start()
+            cmd = "demo/video_demo.py " + self.videoFile + " " + self.videoConfig + " " + self.videoModel + " --out " + self.videoSaveName + ".mp4"
+            self.process.start("python", cmd.split())
 
-            # loop = QEventLoop()
-            # QTimer.singleShot(2000, loop.quit)
+
+
+
+    def clearTerminal(self):
+        self.ui.textBrowser_terminal.clear()
+
+
 
     def terminateThread(self):
         if self.pretrainedModel != '' and self.trainingConfig != '':
-            self.t.kill()
+            os.system("pkill -f \"" + self.trainingConfig + " --cfg-options model.pretrained=" + self.pretrainedModel + "\"")
         if self.imageModel != '' and self.imageFile != '' and self.imageConfig != '':
-            self.e.kill()
+            os.system("pkill -f \"" + self.imageFile + " " + self.imageConfig + " " + self.imageModel + "\"")
         if self.videoModel != '' and self.videoFile != '' and self.videoConfig != '':
-            self.d.kill()
-        self.clearWindow()
+            os.system("pkill -f \"" + self.videoFile + " " + self.videoConfig + " " + self.videoModel + " --out " + self.videoSaveName + ".mp4" + "\"")
+
 
     def resetWindow(self):
-        # self.ui.textBrowser_terminal.clear()
+        self.terminateThread()
+        self.clearTerminal()
         self.clearWindow()
 
     def clearWindow(self):
@@ -765,68 +805,56 @@ class MainWindow(QMainWindow):
         self.ui.lineEdit_video_save_name.setText('result')
         self.videoSaveName = 'result'
 
-    # def updateTextBrowser(self, text):########################################################################
-    #     cursor = self.ui.textBrowser.textCursor()
-    #     cursor.movePosition(QtGui.QTextCursor.End)
-    #     cursor.insertText(text)
-    #     self.ui.textBrowser.setTextCursor(cursor)
-    #     self.ui.textBrowser.ensureCursorVisible()
 
-
-class TrainingThread(QThread):
-    signalForText = pyqtSignal(str)
-
-    def __init__(self, pretrainedModel=None, trainingConfig=None, parent=None):
-        super(TrainingThread, self).__init__(parent)
-        self.pretrainedModel = pretrainedModel
-        self.trainingConfig = trainingConfig
-
-    # def write(self, text):
-    #     self.signalForText.emit(str(text))
-
-    def run(self):
-        os.system("python tools/train.py " + self.trainingConfig + " --cfg-options model.pretrained=" + self.pretrainedModel)
-
-    def kill(self):
-        os.system("pkill -f \"" + self.trainingConfig + " --cfg-options model.pretrained=" + self.pretrainedModel + "\"")
-
-class DisplayThread(QThread):
-    signalForText = pyqtSignal(str)
-
-    def __init__(self, videoFile=None, videoModel=None, videoConfig=None, videoSaveName=None, parent=None):
-        super(DisplayThread, self).__init__(parent)
-        self.videoFile = videoFile
-        self.videoModel = videoModel
-        self.videoConfig = videoConfig
-        self.videoSaveName = videoSaveName
-
-    # def write(self, text):
-    #     self.signalForText.emit(str(text))
-
-    def run(self):
-        os.system("python demo/video_demo.py " + self.videoFile + " " + self.videoConfig + " " + self.videoModel + " --out " + self.videoSaveName + ".mp4")
-
-    def kill(self):
-        os.system("pkill -f \"" + self.videoFile + " " + self.videoConfig + " " + self.videoModel + " --out " + self.videoSaveName + ".mp4" + "\"")
-
-
-class EvaluationThread(QThread):
-    signalForText = pyqtSignal(str)
-
-    def __init__(self, imageFile=None, imageModel=None, imageConfig=None, parent=None):
-        super(EvaluationThread, self).__init__(parent)
-        self.imageFile = imageFile
-        self.imageModel = imageModel
-        self.imageConfig = imageConfig
-
-    # def write(self, text):
-    #     self.signalForText.emit(str(text))
-
-    def run(self):
-        os.system("python demo/image_demo.py " + self.imageFile + " " + self.imageConfig + " " + self.imageModel)
-
-    def kill(self):
-        os.system("pkill -f \"" + self.imageFile + " " + self.imageConfig + " " + self.imageModel + "\"")
+# class TrainingThread(QThread):
+#     signalForText = pyqtSignal(str)
+#
+#     def __init__(self, pretrainedModel=None, trainingConfig=None, parent=None):
+#         super(TrainingThread, self).__init__(parent)
+#         self.pretrainedModel = pretrainedModel
+#         self.trainingConfig = trainingConfig
+#         self.process = QProcess()
+#
+#
+#     def run(self):
+#         cmd = "tools/train.py" + self.trainingConfig + " --cfg-options model.pretrained=" + self.pretrainedModel
+#         self.process.start("python", cmd.split())
+#         # os.system("python tools/train.py " + self.trainingConfig + " --cfg-options model.pretrained=" + self.pretrainedModel)
+#
+#     def kill(self):
+#         os.system("pkill -f \"" + self.trainingConfig + " --cfg-options model.pretrained=" + self.pretrainedModel + "\"")
+#
+# class DisplayThread(QThread):
+#     signalForText = pyqtSignal(str)
+#
+#     def __init__(self, videoFile=None, videoModel=None, videoConfig=None, videoSaveName=None, parent=None):
+#         super(DisplayThread, self).__init__(parent)
+#         self.videoFile = videoFile
+#         self.videoModel = videoModel
+#         self.videoConfig = videoConfig
+#         self.videoSaveName = videoSaveName
+#
+#     def run(self):
+#         os.system("python demo/video_demo.py " + self.videoFile + " " + self.videoConfig + " " + self.videoModel + " --out " + self.videoSaveName + ".mp4")
+#
+#     def kill(self):
+#         os.system("pkill -f \"" + self.videoFile + " " + self.videoConfig + " " + self.videoModel + " --out " + self.videoSaveName + ".mp4" + "\"")
+#
+#
+# class EvaluationThread(QThread):
+#     signalForText = pyqtSignal(str)
+#
+#     def __init__(self, imageFile=None, imageModel=None, imageConfig=None, parent=None):
+#         super(EvaluationThread, self).__init__(parent)
+#         self.imageFile = imageFile
+#         self.imageModel = imageModel
+#         self.imageConfig = imageConfig
+#
+#     def run(self):
+#         os.system("python demo/image_demo.py " + self.imageFile + " " + self.imageConfig + " " + self.imageModel)
+#
+#     def kill(self):
+#         os.system("pkill -f \"" + self.imageFile + " " + self.imageConfig + " " + self.imageModel + "\"")
 
 
 
