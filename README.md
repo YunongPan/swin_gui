@@ -15,10 +15,11 @@ image = Image.open('SAMPLE.jpg')
 new_image = image.resize((2400, 1600))
 new_image.save('SAMPLE_resize.jpg')
 ```
-###1.3. Labeling
+### 1.3. Labeling
 Please refer to the Labelme repo to label the image, the labelled data will be saved as a .json file.
 
 It is recommended not to check File-->Save with image data during labeling. 
+
 ![image](https://raw.githubusercontent.com/YunongPan/readme_add_pic/main/labelme_1.png)
 ## 2. Augmentation with CLoDSA
 
