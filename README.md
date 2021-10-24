@@ -72,12 +72,12 @@ Some other tips:
    mkdir annotations train2017 val2017 test2017
    ```
 2. Create training data set:
-   1. As described in Chapter 2.2, generate the output_augmentation folder (or output_augmentation2 folder).
+   1. As described in Chapter 2.2, generate the output_augmentation folder (or output_augmentation2 folder, same below).
    2. Find the "annotations.json" file in output_augmentation folder. Copy and paste it into /swin_gui/data/coco/annotations. Rename it to "instances_train2017.json"
    3. Copy and paste all the generated images in output_augmentation folder into /swin_gui/data/coco/train2017
 
 3. Create valuation data set:
-   1. Similarly, choose some other images to generate another output_augmentation folder (or output_augmentation2 folder).
+   1. Similarly, choose some other images to generate another output_augmentation folder (or output_augmentation2 folder, same below).
    2. Find the "annotations.json" file in output_augmentation folder. Copy and paste it into /swin_gui/data/coco/annotations. Rename it to "instances_val2017.json"
    3. Copy and paste all the generated images in output_augmentation folder into /swin_gui/data/coco/val2017
 4. Create test data set:
