@@ -1,141 +1,128 @@
-# Swin Transformer for Object Detection
+# DemoSens Training Process
+This repo contains a GUI to facilitate the use of [Swin-Transformer-Object-Detection](https://github.com/SwinTransformer/Swin-Transformer-Object-Detection), which is based on [mmdetection](https://github.com/open-mmlab/mmdetection). And the training process, from the labeling of images to the test after the training, will be simply introduced. 
 
-This repo contains the supported code and configuration files to reproduce object detection results of [Swin Transformer](https://arxiv.org/pdf/2103.14030.pdf). It is based on [mmdetection](https://github.com/open-mmlab/mmdetection).
+## 1. Labeling
+###1.1. Installation
+Please see [labelme](https://github.com/wkentaro/labelme) repo to set up a conda environment and install it.
+###1.2. Resize Image
+Before starting to label the image, it is recommended to use some simple code as follows to resize the image, which is too large, to make the file size smaller. This can effectively avoid problems caused by insufficient GPU memory during training.
 
-## Updates
-
-***05/11/2021*** Models for [MoBY](https://github.com/SwinTransformer/Transformer-SSL) are released
-
-***04/12/2021*** Initial commits
-
-## Results and Models
-
-### Mask R-CNN
-
-| Backbone | Pretrain | Lr Schd | box mAP | mask mAP | #params | FLOPs | config | log | model |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |:---: |
-| Swin-T | ImageNet-1K | 1x | 43.7 | 39.8 | 48M | 267G | [config](configs/swin/mask_rcnn_swin_tiny_patch4_window7_mstrain_480-800_adamw_1x_coco.py) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.3/mask_rcnn_swin_tiny_patch4_window7_1x.log.json)/[baidu](https://pan.baidu.com/s/1bYZk7BIeFEozjRNUesxVWg) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.3/mask_rcnn_swin_tiny_patch4_window7_1x.pth)/[baidu](https://pan.baidu.com/s/19UOW0xl0qc-pXQ59aFKU5w) |
-| Swin-T | ImageNet-1K | 3x | 46.0 | 41.6 | 48M | 267G | [config](configs/swin/mask_rcnn_swin_tiny_patch4_window7_mstrain_480-800_adamw_3x_coco.py) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.2/mask_rcnn_swin_tiny_patch4_window7.log.json)/[baidu](https://pan.baidu.com/s/1Te-Ovk4yaavmE4jcIOPAaw) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.2/mask_rcnn_swin_tiny_patch4_window7.pth)/[baidu](https://pan.baidu.com/s/1YpauXYAFOohyMi3Vkb6DBg) |
-| Swin-S | ImageNet-1K | 3x | 48.5 | 43.3 | 69M | 359G | [config](configs/swin/mask_rcnn_swin_small_patch4_window7_mstrain_480-800_adamw_3x_coco.py) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.2/mask_rcnn_swin_small_patch4_window7.log.json)/[baidu](https://pan.baidu.com/s/1ymCK7378QS91yWlxHMf1yw) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.2/mask_rcnn_swin_small_patch4_window7.pth)/[baidu](https://pan.baidu.com/s/1V4w4aaV7HSjXNFTOSA6v6w) |
-
-### Cascade Mask R-CNN
-
-| Backbone | Pretrain | Lr Schd | box mAP | mask mAP | #params | FLOPs | config | log | model |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |:---: |
-| Swin-T | ImageNet-1K | 1x | 48.1 | 41.7 | 86M | 745G | [config](configs/swin/cascade_mask_rcnn_swin_tiny_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_1x_coco.py) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.3/cascade_mask_rcnn_swin_tiny_patch4_window7_1x.log.json)/[baidu](https://pan.baidu.com/s/1x4vnorYZfISr-d_VUSVQCA) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.3/cascade_mask_rcnn_swin_tiny_patch4_window7_1x.pth)/[baidu](https://pan.baidu.com/s/1vFwbN1iamrtwnQSxMIW4BA) |
-| Swin-T | ImageNet-1K | 3x | 50.4 | 43.7 | 86M | 745G | [config](configs/swin/cascade_mask_rcnn_swin_tiny_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco.py) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.2/cascade_mask_rcnn_swin_tiny_patch4_window7.log.json)/[baidu](https://pan.baidu.com/s/1GW_ic617Ak_NpRayOqPSOA) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.2/cascade_mask_rcnn_swin_tiny_patch4_window7.pth)/[baidu](https://pan.baidu.com/s/1i-izBrODgQmMwTv6F6-x3A) |
-| Swin-S | ImageNet-1K | 3x | 51.9 | 45.0 | 107M | 838G | [config](configs/swin/cascade_mask_rcnn_swin_small_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco.py) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.2/cascade_mask_rcnn_swin_small_patch4_window7.log.json)/[baidu](https://pan.baidu.com/s/17Vyufk85vyocxrBT1AbavQ) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.2/cascade_mask_rcnn_swin_small_patch4_window7.pth)/[baidu](https://pan.baidu.com/s/1Sv9-gP1Qpl6SGOF6DBhUbw) |
-| Swin-B | ImageNet-1K | 3x | 51.9 | 45.0 | 145M | 982G | [config](configs/swin/cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco.py) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.2/cascade_mask_rcnn_swin_base_patch4_window7.log.json)/[baidu](https://pan.baidu.com/s/1UZAR39g-0kE_aGrINwfVHg) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.2/cascade_mask_rcnn_swin_base_patch4_window7.pth)/[baidu](https://pan.baidu.com/s/1tHoC9PMVnldQUAfcF6FT3A) |
-
-### RepPoints V2
-
-| Backbone | Pretrain | Lr Schd | box mAP | mask mAP | #params | FLOPs |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| Swin-T | ImageNet-1K | 3x | 50.0 | - | 45M | 283G |
-
-### Mask RepPoints V2
-
-| Backbone | Pretrain | Lr Schd | box mAP | mask mAP | #params | FLOPs |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| Swin-T | ImageNet-1K | 3x | 50.3 | 43.6 | 47M | 292G |
-
-**Notes**: 
-
-- **Pre-trained models can be downloaded from [Swin Transformer for ImageNet Classification](https://github.com/microsoft/Swin-Transformer)**.
-- Access code for `baidu` is `swin`.
-
-## Results of MoBY with Swin Transformer
-
-### Mask R-CNN
-
-| Backbone | Pretrain | Lr Schd | box mAP | mask mAP | #params | FLOPs | config | log | model |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |:---: |
-| Swin-T | ImageNet-1K | 1x | 43.6 | 39.6 | 48M | 267G | [config](configs/swin/mask_rcnn_swin_tiny_patch4_window7_mstrain_480-800_adamw_1x_coco.py) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.3/moby_mask_rcnn_swin_tiny_patch4_window7_1x.log.json)/[baidu](https://pan.baidu.com/s/1P5gCIfLUQ64jbVMOom0H3w) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.3/moby_mask_rcnn_swin_tiny_patch4_window7_1x.pth)/[baidu](https://pan.baidu.com/s/1xGRihuIrGVreFKn5eJ6oTg) |
-| Swin-T | ImageNet-1K | 3x | 46.0 | 41.7 | 48M | 267G | [config](configs/swin/mask_rcnn_swin_tiny_patch4_window7_mstrain_480-800_adamw_3x_coco.py) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.3/moby_mask_rcnn_swin_tiny_patch4_window7_3x.log.json)/[baidu](https://pan.baidu.com/s/17WAhUmhAam1of3hXOu-wtA) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.3/moby_mask_rcnn_swin_tiny_patch4_window7_3x.pth)/[baidu](https://pan.baidu.com/s/1MSj8cC1wlQU1QaXCdKrzeA) |
-
-### Cascade Mask R-CNN
-
-| Backbone | Pretrain | Lr Schd | box mAP | mask mAP | #params | FLOPs | config | log | model |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |:---: |
-| Swin-T | ImageNet-1K | 1x | 48.1 | 41.5 | 86M | 745G | [config](configs/swin/cascade_mask_rcnn_swin_tiny_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_1x_coco.py) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.3/moby_cascade_mask_rcnn_swin_tiny_patch4_window7_1x.log.json)/[baidu](https://pan.baidu.com/s/1eOdq1rvi0QoXjc7COgiM7A) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.3/moby_cascade_mask_rcnn_swin_tiny_patch4_window7_1x.pth)/[baidu](https://pan.baidu.com/s/1-gbY-LExbf0FgYxWWs8OPg) |
-| Swin-T | ImageNet-1K | 3x | 50.2 | 43.5 | 86M | 745G | [config](configs/swin/cascade_mask_rcnn_swin_tiny_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco.py) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.3/moby_cascade_mask_rcnn_swin_tiny_patch4_window7_3x.log.json)/[baidu](https://pan.baidu.com/s/1zEFXHYjEiXUCWF1U7HR5Zg) | [github](https://github.com/SwinTransformer/storage/releases/download/v1.0.3/moby_cascade_mask_rcnn_swin_tiny_patch4_window7_3x.pth)/[baidu](https://pan.baidu.com/s/1FMmW0GOpT4MKsKUrkJRgeg) |
-
-**Notes:**
-
-- The drop path rate needs to be tuned for best practice.
-- MoBY pre-trained models can be downloaded from [MoBY with Swin Transformer](https://github.com/SwinTransformer/Transformer-SSL).
-
-## Usage
-
-### Installation
-
-Please refer to [get_started.md](https://github.com/open-mmlab/mmdetection/blob/master/docs/get_started.md) for installation and dataset preparation.
-
-### Inference
 ```
-# single-gpu testing
-python tools/test.py <CONFIG_FILE> <DET_CHECKPOINT_FILE> --eval bbox segm
+# python
+from PIL import Image
 
-# multi-gpu testing
-tools/dist_test.sh <CONFIG_FILE> <DET_CHECKPOINT_FILE> <GPU_NUM> --eval bbox segm
+image = Image.open('SAMPLE.jpg')
+new_image = image.resize((2400, 1600))
+new_image.save('SAMPLE_resize.jpg')
 ```
+###1.3. Labeling
+Please refer to the Labelme repo to label the image, the labelled data will be saved as a .json file.
 
-### Training
+It is recommended not to check File-->Save with image data during labeling. 
+![image](https://raw.githubusercontent.com/YunongPan/readme_add_pic/main/labelme_1.png)
+## 2. Augmentation with CLoDSA
 
-To train a detector with pre-trained models, run:
-```
-# single-gpu training
-python tools/train.py <CONFIG_FILE> --cfg-options model.pretrained=<PRETRAIN_MODEL> [model.backbone.use_checkpoint=True] [other optional arguments]
+### 2.1. Installation
+Please see [CLoDSA](https://github.com/joheras/CLoDSA).
+### 2.2. Using
+Please see [
+Augmentation_CLODSA](https://git.rwth-aachen.de/mobile-robotics/demosens/augmentation/augmentation_clodsa) and clone it.
 
-# multi-gpu training
-tools/dist_train.sh <CONFIG_FILE> <GPU_NUM> --cfg-options model.pretrained=<PRETRAIN_MODEL> [model.backbone.use_checkpoint=True] [other optional arguments] 
-```
-For example, to train a Cascade Mask R-CNN model with a `Swin-T` backbone and 8 gpus, run:
-```
-tools/dist_train.sh configs/swin/cascade_mask_rcnn_swin_tiny_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco.py 8 --cfg-options model.pretrained=<PRETRAIN_MODEL> 
-```
+Some other tips:
+1. You may put all the labelled images and corresponding .json files into the labelme_all folder. This folder is like a "Waiting Room" to just make the next steps more convenient.
+2. Easily copy and paste the images that need to be augmented, and their corresponding .json files from the labelme_all folder into the label folder.
+3. Please don't forget to modify labels.txt to match your labels.
+4. Delete the entire input_augmentation folder, and the contents of the output_augmentation and output_augmentation2 folders.
+5. Run `python labelme2coco.py label/ input_augmentation/ --labels labels.txt --ann annotations`
+6. Open the generated input_augmentation folder, and cut all the images in the images folder, and the annotations.json file in the annotations folder, to the previous directory. It means, put them directly into the input_augmentation folder.
+7. Open annotations.json, carefully find all "file_names", delete all "../images/", and only keep the part of "SAMPLE.jpg". Like follows:
+![image](https://raw.githubusercontent.com/YunongPan/readme_add_pic/main/clodsa_1.png)
+8. Run `python clodsa_1.py`, the generated pictures and annotations.json are in the output_augmentation folder.
+9. If it is not enough, run `python clodsa_2.py`, and the generated pictures and annotations.json are in the output_augmentation2 folder. 
 
-**Note:** `use_checkpoint` is used to save GPU memory. Please refer to [this page](https://pytorch.org/docs/stable/checkpoint.html) for more details.
 
+##3. Training with GUI
+###3.1.Installation 
 
-### Apex (optional):
-We use apex for mixed precision training by default. To install apex, run:
-```
-git clone https://github.com/NVIDIA/apex
-cd apex
-pip install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
-```
-If you would like to disable apex, modify the type of runner as `EpochBasedRunner` and comment out the following code block in the [configuration files](configs/swin):
-```
-# do not use mmdet version fp16
-fp16 = None
-optimizer_config = dict(
-    type="DistOptimizerHook",
-    update_interval=1,
-    grad_clip=None,
-    coalesce=True,
-    bucket_size_mb=-1,
-    use_fp16=True,
-)
-```
+1. Please set up the environment refer to  [get_started.md](https://github.com/open-mmlab/mmdetection/blob/master/docs/get_started.md) before starting to install mmdetection. it is recommended to create a conda virtual environment and activate it. 
+    ```
+   conda create -n swin_gui python=3.7 -y
+   conda activate swin_gui
+    ```
+2. It is important to confirm that all package versions match each other! The matching sequence is: GPU + system→CUDA Toolkit→PyTorch→mmcv_full.
+3. Here is some successful sequence:
+   1. GPU Nvidia 3090→CUDA Toolkit 11.0→PyTorch 1.7.1→mmcv_full 1.3.1
+   2. GPU Nvidia 1060→CUDA Toolkit 10.2→PyTorch 1.8.1→mmcv_full 1.3.9
+4. Clone this repository and install mmdetection:
+    ```
+    git clone https://github.com/YunongPan/swin_gui.git
+    cd swin_gui
+    pip install -r requirements/build.txt
+    python setup.py develop
+    ```
+###3.2. Create COCO data set
+1. Create new folders:
+    ```
+   cd swin_gui
+   mkdir data
+   cd data
+   mkdir coco
+   cd coco
+   mkdir annotations train2017 val2017 test2017
+   ```
+2. Create training data set:
+   1. As described in Chapter 2.2, generate the output_augmentation folder (or output_augmentation2 folder).
+   2. Find the "annotations.json" file in output_augmentation folder. Copy and paste it into /swin_gui/data/coco/annotations. Rename it to "instances_train2017.json"
+   3. Copy and paste all the generated images in output_augmentation folder into /swin_gui/data/coco/train2017
 
-## Citing Swin Transformer
-```
-@article{liu2021Swin,
-  title={Swin Transformer: Hierarchical Vision Transformer using Shifted Windows},
-  author={Liu, Ze and Lin, Yutong and Cao, Yue and Hu, Han and Wei, Yixuan and Zhang, Zheng and Lin, Stephen and Guo, Baining},
-  journal={arXiv preprint arXiv:2103.14030},
-  year={2021}
-}
-```
+3. Create valuation data set:
+   1. Similarly, choose some other images to generate another output_augmentation folder (or output_augmentation2 folder).
+   2. Find the "annotations.json" file in output_augmentation folder. Copy and paste it into /swin_gui/data/coco/annotations. Rename it to "instances_val2017.json"
+   3. Copy and paste all the generated images in output_augmentation folder into /swin_gui/data/coco/val2017
+4. Create test data set:
+   1. Simply put some images to be tested into the /swin_gui/data/coco/test2017.
 
-## Other Links
+###3.3. Prepare a pretrained model
+1. Create a new folder:
+   ```
+   cd swin_gui
+   mkdir weights
+   ```
+2. See [Swin-Transformer-Object-Detection](https://github.com/SwinTransformer/Swin-Transformer-Object-Detection) to download a pretrained model. For example [moby_mask_rcnn_swin_tiny_patch4_window7_3x.pth](https://github.com/SwinTransformer/storage/releases/download/v1.0.3/moby_mask_rcnn_swin_tiny_patch4_window7_3x.pth) 
+3. Put the pretrained model into swin_gui/weights
 
-> **Image Classification**: See [Swin Transformer for Image Classification](https://github.com/microsoft/Swin-Transformer).
+###3.4. Training with GUI
+1. Start GUI:
+   ```
+   conda activate swin_gui
+   cd swin_gui
+   python swin_app.py
+   ```
+2. Set parameters:
+   1. Click the "Set parameters" button.
+   2. Select a config file from swin_gui/configs/swin, which is matching to the pretrained model. For example "mask_rcnn_swin_tiny_patch4_window7_mstrain_480-800_adamw_3x_coco.py" for [moby_mask_rcnn_swin_tiny_patch4_window7_3x.pth](https://github.com/SwinTransformer/storage/releases/download/v1.0.3/moby_mask_rcnn_swin_tiny_patch4_window7_3x.pth)
+   3. Modify the "Names of classes". If there is only one class, there must be a comma in the "Names of classes" parameter. Such as: ('person',). If there are two or more classes, then just modify it like this: ('person','bicycle','car'). 
+   4. Set "Number of classes" to match the "Name of classes".
+   5. Set "Number of test images in dataset" to match the number of images in the /swin_gui/data/coco/test2017 folder.
+   6. "Samples per GPU": Batch size of a single GPU
+   7. "Workers per GPU": Worker to pre-fetch data for each single GPU
+   8. Click "Apply" to change parameters.
 
-> **Semantic Segmentation**: See [Swin Transformer for Semantic Segmentation](https://github.com/SwinTransformer/Swin-Transformer-Semantic-Segmentation).
+3. Choose pretrained model from /swin_gui/weights
+4. Select the same config file from swin_gui/configs/swin, which has been modified in step 2.
+5. Click "Train" button to start training.
 
-> **Self-Supervised Learning**: See [MoBY with Swin Transformer](https://github.com/SwinTransformer/Transformer-SSL).
+###3.5. Image test with GUI
+1. Select the trained model from /swin_gui/work_dirs, the same config file, and the to be tested image (, which must be somewhere under /swin_gui). 
+2. Click "Image Test" to start. 
 
-> **Video Recognition**, See [Video Swin Transformer](https://github.com/SwinTransformer/Video-Swin-Transformer).
+###3.6. Video test with GUI
+1. Select the trained model from /swin_gui/work_dirs, the same config file, and the to be tested video (, which must be somewhere under /swin_gui). 
+2. Enter the file name of the resulting video.
+3. Click "Video Test" to start.
+
+###3.7. Other buttons
+1. "Clear terminal": Clear the embedded terminal.
+2. "Stop": Stop the current (training or testing) process.
+3. "Stop and reset all": Stop the current (training or testing) process and initialize the GUI. But the parameters in config files will not be reset.
 
