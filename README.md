@@ -42,8 +42,8 @@ Some other tips:
 9. If it is not enough, run `python clodsa_2.py`, and the generated pictures and annotations.json are in the output_augmentation2 folder. 
 
 
-##3. Training with GUI
-###3.1.Installation 
+## 3. Training with GUI
+### 3.1.Installation 
 
 1. Please set up the environment refer to  [get_started.md](https://github.com/open-mmlab/mmdetection/blob/master/docs/get_started.md) before starting to install mmdetection. it is recommended to create a conda virtual environment and activate it. 
     ```
@@ -61,7 +61,7 @@ Some other tips:
     pip install -r requirements/build.txt
     python setup.py develop
     ```
-###3.2. Create COCO data set
+### 3.2. Create COCO data set
 1. Create new folders:
     ```
    cd swin_gui
@@ -83,7 +83,7 @@ Some other tips:
 4. Create test data set:
    1. Simply put some images to be tested into the /swin_gui/data/coco/test2017.
 
-###3.3. Prepare a pretrained model
+### 3.3. Prepare a pretrained model
 1. Create a new folder:
    ```
    cd swin_gui
@@ -92,7 +92,7 @@ Some other tips:
 2. See [Swin-Transformer-Object-Detection](https://github.com/SwinTransformer/Swin-Transformer-Object-Detection) to download a pretrained model. For example [moby_mask_rcnn_swin_tiny_patch4_window7_3x.pth](https://github.com/SwinTransformer/storage/releases/download/v1.0.3/moby_mask_rcnn_swin_tiny_patch4_window7_3x.pth) 
 3. Put the pretrained model into swin_gui/weights
 
-###3.4. Training with GUI
+### 3.4. Training with GUI
 1. Start GUI:
    ```
    conda activate swin_gui
@@ -113,16 +113,16 @@ Some other tips:
 4. Select the same config file from swin_gui/configs/swin, which has been modified in step 2.
 5. Click "Train" button to start training.
 
-###3.5. Image test with GUI
+### 3.5. Image test with GUI
 1. Select the trained model from /swin_gui/work_dirs, the same config file, and the to be tested image (, which must be somewhere under /swin_gui). 
 2. Click "Image Test" to start. 
 
-###3.6. Video test with GUI
+### 3.6. Video test with GUI
 1. Select the trained model from /swin_gui/work_dirs, the same config file, and the to be tested video (, which must be somewhere under /swin_gui). 
 2. Enter the file name of the resulting video.
 3. Click "Video Test" to start.
 
-###3.7. Other buttons
+### 3.7. Other buttons
 1. "Clear terminal": Clear the embedded terminal.
 2. "Stop": Stop the current (training or testing) process.
 3. "Stop and reset all": Stop the current (training or testing) process and initialize the GUI. But the parameters in config files will not be reset.
