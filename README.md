@@ -2,9 +2,9 @@
 This repo contains a GUI to facilitate the use of [Swin-Transformer-Object-Detection](https://github.com/SwinTransformer/Swin-Transformer-Object-Detection), which is based on [mmdetection](https://github.com/open-mmlab/mmdetection). And the training process, from the labeling of images to the test after the training, will be simply introduced. 
 
 ## 1. Labeling
-###1.1. Installation
+### 1.1. Installation
 Please see [labelme](https://github.com/wkentaro/labelme) repo to set up a conda environment and install it.
-###1.2. Resize Image
+### 1.2. Resize Image
 Before starting to label the image, it is recommended to use some simple code as follows to resize the image, which is too large, to make the file size smaller. This can effectively avoid problems caused by insufficient GPU memory during training.
 
 ```
