@@ -62,7 +62,7 @@ Some other tips:
     pip install -r requirements/build.txt
     python setup.py develop
     ```  
-5. If there is a KeyError: 'SwinTransformer is not in the models registry'. You may try reinstalling mmdetection to solve it.
+5. If there is a KeyError: 'SwinTransformer is not in the models registry'. You may try reinstalling mmdetection.
     ```
     conda activate swin
     cd swin_gui
