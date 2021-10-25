@@ -47,8 +47,8 @@ Some other tips:
 
 1. Please set up the environment refer to  [get_started.md](https://github.com/open-mmlab/mmdetection/blob/master/docs/get_started.md) before starting to install mmdetection. it is recommended to create a conda virtual environment and activate it. 
     ```
-   conda create -n swin_gui python=3.7 -y
-   conda activate swin_gui
+   conda create -n swin python=3.7 -y
+   conda activate swin
     ```
 2. It is important to confirm that all package versions match each other! The matching sequence is: GPU + system→CUDA Toolkit→PyTorch→mmcv_full.
 3. Here is some successful sequence:
@@ -57,13 +57,14 @@ Some other tips:
 4. Clone this repository and install mmdetection:
     ```
     git clone https://github.com/YunongPan/swin_gui.git
+    conda activate swin
     cd swin_gui
     pip install -r requirements/build.txt
     python setup.py develop
     ```  
 5. If there is a KeyError: 'SwinTransformer is not in the models registry'. Please reinstall mmdetection.
     ```
-    conda activate swin_gui
+    conda activate swin
     cd swin_gui
     pip uninstall mmdet
     rm -rf ./build
@@ -104,7 +105,7 @@ Some other tips:
 ### 3.4. Training with GUI
 1. Start GUI:
    ```
-   conda activate swin_gui
+   conda activate swin
    cd swin_gui
    python swin_app.py
    ```
