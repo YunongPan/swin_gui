@@ -71,7 +71,6 @@ Some other tips:
     pip install -r requirements/build.txt
     python setup.py develop    
     ```  
-    More infos in [issue 9](https://github.com/SwinTransformer/Swin-Transformer-Object-Detection/issues/9)
 ### 3.2. Create COCO data set
 1. Create new folders:
     ```
