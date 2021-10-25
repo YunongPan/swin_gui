@@ -132,7 +132,7 @@ Some other tips:
 2. Enter the file name of the resulting video.
 3. Click "Video Test" to start.
 
-### 3.7. Other buttons
+### 3.7. Other functions
 1. "Clear terminal": Clear the embedded terminal.
 2. "Stop": Stop the current (training or testing) process.
 3. "Stop and reset all": Stop the current (training or testing) process and initialize the GUI. But the parameters in config files will not be reset.
