@@ -60,7 +60,16 @@ Some other tips:
     cd swin_gui
     pip install -r requirements/build.txt
     python setup.py develop
+    ```  
+5. If there is a KeyError: 'SwinTransformer is not in the models registry'. Please reinstall mmdetection.
     ```
+    conda activate swin_gui
+    cd swin_gui
+    pip uninstall mmdet
+    rm -rf ./build
+    pip install -r requirements/build.txt
+    python setup.py develop    
+    ```  
 ### 3.2. Create COCO data set
 1. Create new folders:
     ```
