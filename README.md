@@ -92,6 +92,7 @@ Some other tips:
    3. Copy and paste all the generated images in output_augmentation folder into /swin_gui/data/coco/val2017
 4. Create test data set:
    1. Simply put some images to be tested into the /swin_gui/data/coco/test2017.
+5. Modify the parameter "JSON_LOC" in script "/swin_gui/rewrite_annotation.py" and run it twice to check and make sure that the annotation files "instances_train2017.json" and "instances_val2017.json" have no error.
 
 ### 3.3. Prepare a pretrained model
 1. Create a new folder:
